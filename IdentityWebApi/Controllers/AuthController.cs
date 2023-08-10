@@ -5,6 +5,7 @@ using IdentityWebApi.Models.Authentication.Signup;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace IdentityWebApi.Controllers
 {
@@ -42,31 +43,44 @@ namespace IdentityWebApi.Controllers
             }else
             {
                 #region create user
-                // create the new user
-                IdentityUser user = new IdentityUser()
+                // check for the role
+                if (await _roleManager.RoleExistsAsync(role))
                 {
-                    Email = registerUser.Email,
-                    SecurityStamp = Guid.NewGuid().ToString(),
-                    UserName = registerUser.Username
-                };
-                var result = await _userManager.CreateAsync(user, registerUser.Password);
-
-                if (result.Succeeded)
-                {
-                    // if user is created successfully
-                    return StatusCode(StatusCodes.Status201Created, new Response
+                    // create the new user
+                    IdentityUser user = new IdentityUser()
                     {
-                        Status = "User created successfully",
-                        Message = "Success",
-                    });
+                        Email = registerUser.Email,
+                        SecurityStamp = Guid.NewGuid().ToString(),
+                        UserName = registerUser.Username
+                    };
+
+                    var result = await _userManager.CreateAsync(user, registerUser.Password);
+                    if (result.Succeeded)
+                    {
+                        await _userManager.AddToRoleAsync(user, role);
+                        // if user is created successfully
+                        return StatusCode(StatusCodes.Status201Created, new Response
+                        {
+                            Status = "Success",
+                            Message = "User created successfully",
+                        });
+                    }
+                    else
+                    {
+                        // if user is not created
+                        return StatusCode(StatusCodes.Status500InternalServerError, new Response
+                        {
+                            Status = "Error",
+                            Message = "Failed to signup de to server internal error",
+                        });
+                    }
                 }
                 else
                 {
-                    // if user is not created
-                    return StatusCode(StatusCodes.Status500InternalServerError, new Response
+                    return StatusCode(StatusCodes.Status403Forbidden, new Response
                     {
                         Status = "Error",
-                        Message = "Failed to signup de to server internal error",
+                        Message = "Role does not exist",
                     });
                 }
                 #endregion
