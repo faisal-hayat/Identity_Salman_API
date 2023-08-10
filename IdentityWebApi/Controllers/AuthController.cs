@@ -1,4 +1,5 @@
 ﻿using IdentityWebApi.Data;
+using IdentityWebApi.Models.Authentication.Signup;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -24,10 +25,15 @@ namespace IdentityWebApi.Controllers
             _userManager = userManager;
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("Authentication")]
-        public IActionResult Get()
+        public async Task<IActionResult> Register([FromBody]RegisterUser registerUser, string role)
         {
+            var userExist = await _userManager.FindByEmailAsync(registerUser.Email);
+            if (registerUser == null) {
+
+                throw new ArgumentNullException();
+            }
             return Ok();
         }
     }
