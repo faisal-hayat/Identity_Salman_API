@@ -1,4 +1,6 @@
-﻿using IdentityWebApi.Data;
+﻿using Azure.Identity;
+using IdentityWebApi.Data;
+using IdentityWebApi.Models;
 using IdentityWebApi.Models.Authentication.Signup;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -32,9 +34,44 @@ namespace IdentityWebApi.Controllers
             var userExist = await _userManager.FindByEmailAsync(registerUser.Email);
             if (registerUser == null) {
 
-                throw new ArgumentNullException();
+                return StatusCode(StatusCodes.Status403Forbidden, new Response
+                {
+                    Status = "Error",
+                    Message = "User already exist",
+                });
+            }else
+            {
+                #region create user
+                // create the new user
+                IdentityUser user = new IdentityUser()
+                {
+                    Email = registerUser.Email,
+                    SecurityStamp = Guid.NewGuid().ToString(),
+                    UserName = registerUser.Username
+                };
+                var result = await _userManager.CreateAsync(user, registerUser.Password);
+
+                if (result.Succeeded)
+                {
+                    // if user is created successfully
+                    return StatusCode(StatusCodes.Status201Created, new Response
+                    {
+                        Status = "User created successfully",
+                        Message = "Success",
+                    });
+                }
+                else
+                {
+                    // if user is not created
+                    return StatusCode(StatusCodes.Status500InternalServerError, new Response
+                    {
+                        Status = "Error",
+                        Message = "Failed to signup de to server internal error",
+                    });
+                }
+                #endregion
+
             }
-            return Ok();
         }
     }
 }
