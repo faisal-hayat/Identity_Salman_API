@@ -2,6 +2,10 @@ using IdentityWebApi.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using UserManagmentEmail.Models;
+using UserManagmentEmail.Services;
+using UserManagmentEmail.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +39,12 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequireUppercase = false;
     options.Password.RequiredLength = 3;
     options.Password.RequiredUniqueChars = 0;
+    options.SignIn.RequireConfirmedEmail = false;
 });
+
+var emailConfig = builder.Configuration.GetSection("MailSettings").Get<EmailConfigration>();
+builder.Services.AddSingleton(emailConfig);
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
 // Configure the HTTP request pipeline.

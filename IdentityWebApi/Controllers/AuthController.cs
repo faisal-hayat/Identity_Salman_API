@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Internal;
+using MimeKit;
+using UserManagmentEmail.Models;
+using UserManagmentEmail.Services.Interfaces;
 
 namespace IdentityWebApi.Controllers
 {
@@ -17,15 +20,17 @@ namespace IdentityWebApi.Controllers
         private UserManager<IdentityUser> _userManager;
         private RoleManager<IdentityRole> _roleManager;
         private IConfiguration _configuration;
-
+        // get email service here
+        private readonly IEmailService _emailService;
 
         public AuthController(ApplicationDbContext context, RoleManager<IdentityRole> roleManager, IConfiguration configuration,
-            UserManager<IdentityUser> userManager)
+            UserManager<IdentityUser> userManager, IEmailService emailService)
         {
             _context = context;
             _roleManager = roleManager;
             _configuration = configuration;
             _userManager = userManager;
+            _emailService = emailService;
         }
 
         [HttpPost]
@@ -86,6 +91,23 @@ namespace IdentityWebApi.Controllers
                 #endregion
 
             }
+        }
+
+        [HttpGet]
+        [Route("SendEmail")]
+        public async Task<IActionResult> EmailSend()
+        {
+            var message = new Message(new List<MailboxAddress> { new MailboxAddress("email", "muhammad.faisal.hayat79@gmail.com") },
+                "Testing the email functionality",
+                "<h1>This is the subject</h1>" );
+            
+            _emailService.SendEmail(message);
+
+            return StatusCode(StatusCodes.Status200OK, new Response
+            {
+                Status = "Success",
+                Message = "Enail Sent",
+            });
         }
     }
 }
